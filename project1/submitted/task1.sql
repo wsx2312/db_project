@@ -1,6 +1,6 @@
-select "YEAR" as "연도", "MAJOR_NAME" as "전공명", count(*) as "수업의 개수" 
-	from "course" as C1 join "college" as C2 
-	on C1."COURSE_ID_PREFIX" = C2."MAJOR_ID"
-where "MAJOR_NAME" not like '교양'
-group by ("YEAR", "MAJOR_NAME")
-order by "연도", "수업의 개수" desc
+select "YEAR", "MAJOR_NAME", count(*) as "CLASS_COUNT" from "course" as c1
+	join "college" as c2 
+		on c1."COURSE_ID_PREFIX" = c2."MAJOR_ID"
+where c2."MAJOR_NAME" != '교양'
+group by (c1."YEAR", c2."MAJOR_NAME")
+order by "YEAR", "CLASS_COUNT" desc;
