@@ -1,13 +1,11 @@
-select t."COURSE_NAME" 
-from (
-		select c."COURSE_NAME", c."COURSE_ID_PREFIX", c."COURSE_ID_NO", count(*) as "CLASS_RETAKE_COUNT"
-			from "course_registration" as cr 
-			join "course" as c
-				on cr."COURSE_ID" = c."COURSE_ID"
-		where c."YEAR" between 2013 and 2018
-		group by (c."COURSE_NAME", c."COURSE_ID_PREFIX", c."COURSE_ID_NO", cr."STUDENT_ID")
-		having count(c."COURSE_ID_NO") > 1
-) t
-group by (t."COURSE_NAME", t."COURSE_ID_PREFIX", t."COURSE_ID_NO")
-order by SUM("CLASS_RETAKE_COUNT") desc
-limit 3
+SELECT A."COURSE_NAME" 
+FROM course as A, course_registration as B 
+WHERE A."COURSE_ID" = B."COURSE_ID" and B."STUDENT_ID" in (
+SELECT D."STUDENT_ID" 
+FROM course as C, course_registration as D 
+WHERE C."COURSE_ID" = D."COURSE_ID" 
+GROUP BY D."STUDENT_ID" 
+HAVING COUNT(D."STUDENT_ID") > 1) 
+GROUP BY A."COURSE_NAME" 
+ORDER BY COUNT(B."STUDENT_ID") DESC 
+LIMIT 3;

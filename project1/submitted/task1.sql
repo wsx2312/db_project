@@ -1,6 +1,5 @@
-select "YEAR", "MAJOR_NAME", count(*) as "CLASS_COUNT" from "course" as c1
-	join "college" as c2 
-		on c1."COURSE_ID_PREFIX" = c2."MAJOR_ID"
-where c2."MAJOR_NAME" != '교양'
-group by (c1."YEAR", c2."MAJOR_NAME")
-order by "YEAR", "CLASS_COUNT" desc;
+SELECT A."YEAR", B."MAJOR_NAME", COUNT(A."COURSE_ID_PREFIX") as "NUM_COURSE" 
+FROM course as A, college as B 
+WHERE A."COURSE_ID_PREFIX" = B."MAJOR_ID" AND B."MAJOR_NAME" != '교양'
+GROUP BY A."YEAR", B."MAJOR_NAME" 
+ORDER BY A."YEAR", COUNT(A."COURSE_ID_PREFIX") desc;
