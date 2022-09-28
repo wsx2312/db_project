@@ -1,7 +1,7 @@
 SELECT
   gt."DAY_OF_WEEK"
-  , FORMAT('%s ~ %s' , TO_CHAR(tt."START_TIME" , 'FMHH24:MI') , TO_CHAR(tt."END_TIME" , 'FMHH24:MI'))
-  time
+  , TO_CHAR(tt."START_TIME" , 'FMHH24:MI') "START_TIME"
+  , TO_CHAR(tt."END_TIME" , 'FMHH24:MI') "END_TIME"
 FROM ( WITH student_timetable AS (
     SELECT
       ctt."DAY_OF_WEEK"
