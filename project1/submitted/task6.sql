@@ -77,3 +77,5 @@ WHERE
       MIN("AVG_GRADE")
     FROM
       avg_grade)
+ORDER BY
+  ag."AVG_GRADE" DESC
