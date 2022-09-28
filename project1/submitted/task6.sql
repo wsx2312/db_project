@@ -1,76 +1,81 @@
--- with graduate_student as (
--- 	select s."STUDENT_ID", sum(g."GRADE" * c."CREDIT") / sum(c."CREDIT") as "AVG_GRADE" from students s
--- 	join grade g
--- 		on g."STUDENT_ID" = s."STUDENT_ID"
--- 	join course c
--- 		on c."COURSE_ID" = g."COURSE_ID"
--- 	where (s."STUDENT_ID", c."COURSE_ID_PREFIX", c."COURSE_ID_NO", concat(c."YEAR", c."SEMESTER"))
--- 	in (
--- 		select s."STUDENT_ID", c."COURSE_ID_PREFIX", c."COURSE_ID_NO", max(concat(c."YEAR", c."SEMESTER")) "YEAR_SEMESTER" from students s
--- 			join grade g
--- 				on g."STUDENT_ID" = s."STUDENT_ID"
--- 			join course c
--- 				on c."COURSE_ID" = g."COURSE_ID"
--- 		where s."ADMISSION_YEAR" = 2015
--- 		group by (s."STUDENT_ID", c."COURSE_ID_PREFIX", c."COURSE_ID_NO")
--- 	)
--- 	and g."GRADE" != 0
--- 	group by s."STUDENT_ID"
--- 	having sum(c."CREDIT") >= 40
--- )
--- select concat(left(s."NAME", 1), repeat('*', length(s."NAME") - 1)), s."STUDENT_ID", c."MAJOR_NAME", c."COLLEGE_NAME" from graduate_student gs
--- join students s
--- 	on gs."STUDENT_ID" = s."STUDENT_ID"
--- join college c 
--- 	on s."MAJOR_ID" = c."MAJOR_ID"
--- where gs."AVG_GRADE" = (select max("AVG_GRADE") from graduate_student) 
--- 	or gs."AVG_GRADE" = (select min("AVG_GRADE") from graduate_student) 
-
-with grade4_with_no_retake as  (
-  select s."STUDENT_ID", g."GRADE", c."CREDIT", s."NAME" from students s 
-	join grade g
-		on g."STUDENT_ID" = s."STUDENT_ID"
-	join course c
-		on c."COURSE_ID" = g."COURSE_ID"
-	where (s."STUDENT_ID", c."COURSE_ID_PREFIX", c."COURSE_ID_NO", concat(c."YEAR", c."SEMESTER"))
-	in (
-		select s."STUDENT_ID", c."COURSE_ID_PREFIX", c."COURSE_ID_NO", max(concat(c."YEAR", c."SEMESTER")) "YEAR_SEMESTER" from students s
-			join grade g
-				on g."STUDENT_ID" = s."STUDENT_ID"
-			join course c
-				on c."COURSE_ID" = g."COURSE_ID"
-		where s."GRADE" = 4
-		group by (s."STUDENT_ID", c."COURSE_ID_PREFIX", c."COURSE_ID_NO")
-	)
-)
-select concat(left(s."NAME", 1), repeat('*', length(s."NAME") - 1)), s."STUDENT_ID", c."MAJOR_NAME", c."COLLEGE_NAME" from (
-	select "STUDENT_ID" from grade4_with_no_retake gs
-		where "GRADE" != 0
-	group by "STUDENT_ID"
-	having sum("CREDIT") >= 40
-) gs
-join
-(
-	select "STUDENT_ID", sum("GRADE" * "CREDIT") / sum("CREDIT") as "AVG_GRADE" 
-		from grade4_with_no_retake gs
-	group by "STUDENT_ID"
-) ag
-	on gs."STUDENT_ID" = ag."STUDENT_ID"
-join students s
-	on gs."STUDENT_ID" = s."STUDENT_ID"
-join college c 
-	on s."MAJOR_ID" = c."MAJOR_ID"
-where ag."AVG_GRADE" = (select max("AVG_GRADE") from 
-		(
-			select "STUDENT_ID", sum("GRADE" * "CREDIT") / sum("CREDIT") as "AVG_GRADE" 
-				from grade4_with_no_retake gs
-			group by "STUDENT_ID"
-		) t
-	) 
-	or ag."AVG_GRADE" = (select min("AVG_GRADE") from 
-		(
-			select "STUDENT_ID", sum("GRADE" * "CREDIT") / sum("CREDIT") as "AVG_GRADE" 
-				from grade4_with_no_retake gs
-			group by "STUDENT_ID"
-		) t
-	) 
+WITH grade4_with_no_retake AS (
+  SELECT
+    s."STUDENT_ID"
+    , g."GRADE"
+    , c."CREDIT"
+    , s."NAME"
+  FROM
+    students s
+    JOIN grade g ON g."STUDENT_ID" = s."STUDENT_ID"
+    JOIN course c ON c."COURSE_ID" = g."COURSE_ID"
+  WHERE (s."STUDENT_ID"
+    , c."COURSE_ID_PREFIX"
+    , c."COURSE_ID_NO"
+    , CONCAT(c."YEAR"
+      , c."SEMESTER")) IN (
+    SELECT
+      s."STUDENT_ID"
+      , c."COURSE_ID_PREFIX"
+      , c."COURSE_ID_NO"
+      , MAX(CONCAT(c."YEAR"
+          , c."SEMESTER")) "YEAR_SEMESTER"
+    FROM
+      students s
+      JOIN grade g ON g."STUDENT_ID" = s."STUDENT_ID"
+      JOIN course c ON c."COURSE_ID" = g."COURSE_ID"
+    WHERE
+      s."GRADE" = 4
+    GROUP BY
+      (s."STUDENT_ID"
+        , c."COURSE_ID_PREFIX"
+        , c."COURSE_ID_NO")))
+SELECT
+  CONCAT(
+  LEFT (s."NAME" , 1) , REPEAT('*' , LENGTH(s."NAME") - 1))
+  , s."STUDENT_ID"
+  , c."MAJOR_NAME"
+  , c."COLLEGE_NAME"
+FROM (
+  SELECT
+    "STUDENT_ID"
+  FROM
+    grade4_with_no_retake gs
+  WHERE
+    "GRADE" != 0
+  GROUP BY
+    "STUDENT_ID"
+  HAVING
+    SUM("CREDIT") >= 40) gs
+  JOIN (
+    SELECT
+      "STUDENT_ID"
+      , SUM("GRADE" * "CREDIT") / SUM("CREDIT") AS "AVG_GRADE"
+    FROM
+      grade4_with_no_retake gs
+    GROUP BY
+      "STUDENT_ID") ag ON gs."STUDENT_ID" = ag."STUDENT_ID"
+  JOIN students s ON gs."STUDENT_ID" = s."STUDENT_ID"
+  JOIN college c ON s."MAJOR_ID" = c."MAJOR_ID"
+WHERE
+  ag."AVG_GRADE" = (
+    SELECT
+      MAX("AVG_GRADE")
+    FROM (
+      SELECT
+        "STUDENT_ID"
+        , SUM("GRADE" * "CREDIT") / SUM("CREDIT") AS "AVG_GRADE"
+      FROM
+        grade4_with_no_retake gs
+      GROUP BY
+        "STUDENT_ID") t)
+  OR ag."AVG_GRADE" = (
+    SELECT
+      MIN("AVG_GRADE")
+    FROM (
+      SELECT
+        "STUDENT_ID"
+        , SUM("GRADE" * "CREDIT") / SUM("CREDIT") AS "AVG_GRADE"
+      FROM
+        grade4_with_no_retake gs
+      GROUP BY
+        "STUDENT_ID") t)
