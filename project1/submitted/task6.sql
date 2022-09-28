@@ -28,7 +28,17 @@ WITH grade4_with_no_retake AS (
     GROUP BY
       (s."STUDENT_ID"
         , c."COURSE_ID_PREFIX"
-        , c."COURSE_ID_NO")))
+        , c."COURSE_ID_NO"))
+)
+, avg_grade AS (
+  SELECT
+    "STUDENT_ID"
+    , SUM("GRADE" * "CREDIT") / SUM("CREDIT") AS "AVG_GRADE"
+FROM
+  grade4_with_no_retake gs
+GROUP BY
+  "STUDENT_ID"
+)
 SELECT
   CONCAT(
   LEFT (s."NAME" , 1) , REPEAT('*' , LENGTH(s."NAME") - 1))
@@ -60,22 +70,10 @@ WHERE
   ag."AVG_GRADE" = (
     SELECT
       MAX("AVG_GRADE")
-    FROM (
-      SELECT
-        "STUDENT_ID"
-        , SUM("GRADE" * "CREDIT") / SUM("CREDIT") AS "AVG_GRADE"
-      FROM
-        grade4_with_no_retake gs
-      GROUP BY
-        "STUDENT_ID") t)
+    FROM
+      avg_grade)
   OR ag."AVG_GRADE" = (
     SELECT
       MIN("AVG_GRADE")
-    FROM (
-      SELECT
-        "STUDENT_ID"
-        , SUM("GRADE" * "CREDIT") / SUM("CREDIT") AS "AVG_GRADE"
-      FROM
-        grade4_with_no_retake gs
-      GROUP BY
-        "STUDENT_ID") t)
+    FROM
+      avg_grade)
